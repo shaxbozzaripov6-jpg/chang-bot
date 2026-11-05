@@ -3,7 +3,8 @@
 Bu bot O'zbekiston shaharlarida chang darajasini (PM10, PM2.5, chang) ko'rsatadi. U 3 kunlik prognoz va grafik beradi, obunachilarni chang bo'ronidan oldin ogohlantiradi va har kuni ertalab hisobot yuboradi.
 
 **Imkoniyatlar:**
-- 🌐 **Ikki til**: o'zbekcha va ruscha (/til)
+- 🌐 **Uch til**: o'zbekcha, ruscha va inglizcha (/til)
+- 🏙 **Shahar rasmlari**: har bir shaharning o'ziga xos manzarasi (Registon, Minorai Kalon, teleminora, Mo'ynoq kemalari va boshqalar) bot tomonidan chiziladi. Osmon hozirgi ob-havoga mos keladi: quyosh, oy va yulduzlar, bulut, yomg'ir, qor, tuman, momaqaldiroq yoki chang bo'roni
 - 🌤 **Ob-havo**: harorat, namlik, yog'in, shamol tezligi va yo'nalishi; kuchli shamol (shiddati 15 m/s dan yuqori) haqida ogohlantirish
 - 📊 **Grafik**: 72 soatlik chang prognozi va pastida shamol tezligi, shiddati va yo'nalishi strelkalari (/grafik)
 - 📸 **Bo'ron xabarlari**: foydalanuvchilar bo'ron rasmini yuboradi, admin tasdiqlaydi va bot rasmni 100 km radiusdagi obunachilarga jo'natadi (/xabar, /xabarlar)
@@ -17,7 +18,8 @@ Chang va ob-havo ma'lumotlari bepul Open-Meteo / Copernicus CAMS xizmatidan olin
 | `api.py` | Internetdan chang ma'lumotlarini oladi |
 | `db.py` | Foydalanuvchilar va ularning sozlamalarini saqlaydi (SQLite bazasi) |
 | `texts.py` | Barcha matnlar (o'zbek va rus), shaharlar, maslahatlar. **Bot gaplarini o'zgartirish uchun shu faylni tahrirlang** |
-| `chart.py` | Chang grafigini chizadi |
+| `chart.py` | Chang va shamol grafigini chizadi |
+| `scene.py` | Shahar manzarasi va ob-havoga mos osmonni chizadi |
 | `requirements.txt` | Botga kerakli kutubxonalar ro'yxati |
 | `Procfile` | Hosting xizmatiga botni qanday ishga tushirishni aytadi |
 | `.env.example` | Sozlamalar fayli namunasi |
@@ -44,7 +46,7 @@ Chang va ob-havo ma'lumotlari bepul Open-Meteo / Copernicus CAMS xizmatidan olin
    obuna - Ogohlantirishlar
    maslahat - Sog'liq maslahatlari
    malumot - Chang bo'ronlari haqida
-   til - Til / Язык
+   til - Til / Язык / Language
    help - Yordam
    ```
 

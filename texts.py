@@ -3,7 +3,7 @@
 Bot gaplarini o'zgartirish uchun shu faylni tahrirlang.
 """
 
-LANGS = ("uz", "ru")
+LANGS = ("uz", "ru", "en")
 
 # kalit: (o'zbekcha nom, ruscha nom, kenglik, uzunlik)
 CITIES = {
@@ -66,7 +66,7 @@ T = {
         "btn_sub": "🔔 Obuna",
         "btn_tips": "💊 Maslahatlar",
         "btn_info": "📚 Ma'lumot",
-        "btn_lang": "🌐 Til / Язык",
+        "btn_lang": "🌐 Til / Язык / Language",
         "btn_refresh": "🔄 Yangilash",
         # umumiy
         "start": (
@@ -93,7 +93,7 @@ T = {
             "/stop: barcha ma'lumotlarimni o'chirish\n\n"
             "Ma'lumot manbasi: Open-Meteo / Copernicus CAMS."
         ),
-        "choose_lang": "🌐 Tilni tanlang / Выберите язык:",
+        "choose_lang": "🌐 Tilni tanlang / Выберите язык / Choose language:",
         "lang_set": "✅ Til: O'zbekcha",
         "choose_city": "🏙 Shaharni tanlang:",
         "city_set": "✅ Shahar: <b>{name}</b>",
@@ -218,7 +218,7 @@ T = {
         "btn_sub": "🔔 Подписка",
         "btn_tips": "💊 Советы",
         "btn_info": "📚 Информация",
-        "btn_lang": "🌐 Til / Язык",
+        "btn_lang": "🌐 Til / Язык / Language",
         "btn_refresh": "🔄 Обновить",
         "start": (
             "Здравствуйте, {name}! 👋\n\n"
@@ -243,7 +243,7 @@ T = {
             "/stop: удалить все мои данные\n\n"
             "Источник данных: Open-Meteo / Copernicus CAMS."
         ),
-        "choose_lang": "🌐 Tilni tanlang / Выберите язык:",
+        "choose_lang": "🌐 Tilni tanlang / Выберите язык / Choose language:",
         "lang_set": "✅ Язык: Русский",
         "choose_city": "🏙 Выберите город:",
         "city_set": "✅ Город: <b>{name}</b>",
@@ -386,7 +386,7 @@ WEATHER_T = {
         "no_weather": "<i>Не удалось получить данные о погоде.</i>",
     },
 }
-for _lang in LANGS:
+for _lang in ("uz", "ru"):
     T[_lang].update(WEATHER_T[_lang])
 
 WIND_GUST_WARN = 15  # m/s: shundan kuchli shamol shiddati bo'lsa ogohlantiramiz
@@ -440,6 +440,8 @@ WIND_LEVELS = {  # (chegara m/s, nomi)
 
 def weather_desc(code, lang: str = "uz"):
     emoji, uz, ru = WEATHER_CODES.get(code, ("🌡", "—", "—"))
+    if lang == "en":
+        return emoji, WEATHER_EN.get(code, "—")
     return emoji, (ru if lang == "ru" else uz)
 
 
@@ -458,7 +460,200 @@ def wind_level(speed, lang: str = "uz") -> str:
     return ""
 
 
-# Har bir tugma ikkala tilda: handlerlar ikkalasini ham taniydi
+# ---------------- English ----------------
+CITY_EN = {
+    "toshkent": "Tashkent", "nukus": "Nukus", "moynoq": "Muynak", "urganch": "Urgench",
+    "buxoro": "Bukhara", "navoiy": "Navoi", "samarqand": "Samarkand", "qarshi": "Karshi",
+    "termiz": "Termez", "jizzax": "Jizzakh", "guliston": "Gulistan", "namangan": "Namangan",
+    "andijon": "Andijan", "fargona": "Fergana",
+}
+
+LEVELS["en"] = [
+    ("Good", "The air is clean. Enjoy your time outdoors."),
+    ("Moderate", "Sensitive people (asthma, allergies) should take care."),
+    ("Poor", "Limit time outdoors, exercise indoors."),
+    ("Very poor", "Wear a mask (N95/FFP2) and keep windows closed."),
+    ("Hazardous", "Dust storm! Stay indoors unless absolutely necessary."),
+]
+WEEKDAYS["en"] = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+
+WEATHER_EN = {
+    0: "Clear sky", 1: "Mainly clear", 2: "Partly cloudy", 3: "Overcast",
+    45: "Fog", 48: "Rime fog", 51: "Light drizzle", 53: "Drizzle", 55: "Heavy drizzle",
+    56: "Freezing drizzle", 57: "Freezing drizzle", 61: "Light rain", 63: "Rain",
+    65: "Heavy rain", 66: "Freezing rain", 67: "Freezing rain", 71: "Light snow", 73: "Snow",
+    75: "Heavy snow", 77: "Snow grains", 80: "Rain showers", 81: "Heavy showers",
+    82: "Violent showers", 85: "Snow showers", 86: "Heavy snow showers",
+    95: "Thunderstorm", 96: "Thunderstorm with hail", 99: "Severe thunderstorm with hail",
+}
+WIND_DIRS["en"] = ["North", "Northeast", "East", "Southeast",
+                   "South", "Southwest", "West", "Northwest"]
+WIND_LEVELS["en"] = [(3, "calm"), (6, "light"), (10, "moderate"), (15, "strong"),
+                     (10**9, "very strong")]
+
+T["en"] = {
+    "btn_now": "🌫 Now",
+    "btn_fc": "📈 Forecast",
+    "btn_chart": "📊 Chart",
+    "btn_city": "🏙 City",
+    "btn_loc": "📍 Location",
+    "btn_report": "📸 Report a storm",
+    "btn_feed": "👀 Reports",
+    "btn_sub": "🔔 Alerts",
+    "btn_tips": "💊 Health tips",
+    "btn_info": "📚 About",
+    "btn_lang": T["uz"]["btn_lang"],
+    "btn_refresh": "🔄 Refresh",
+    "start": (
+        "Hello, {name}! 👋\n\n"
+        "I'm the <b>Chang Monitor</b> bot 🌪\n"
+        "I track <b>dust and sand storms</b> across Uzbekistan: current levels, "
+        "forecasts, charts, weather and alerts.\n\n"
+        "📸 See a storm with your own eyes? Send a photo and we'll warn others!\n\n"
+        "To start, pick your city or send your 📍 location 👇"
+    ),
+    "help": (
+        "<b>Commands:</b>\n"
+        "/havo: current dust level and weather\n"
+        "/prognoz: 3-day forecast\n"
+        "/grafik: dust and wind chart\n"
+        "/shahar: choose a city\n"
+        "/xabar: send a storm photo\n"
+        "/xabarlar: storm reports nearby\n"
+        "/obuna: alerts and daily report\n"
+        "/maslahat: health tips\n"
+        "/malumot: about dust storms\n"
+        "/til: change language\n"
+        "/stop: delete all my data\n\n"
+        "Data source: Open-Meteo / Copernicus CAMS."
+    ),
+    "choose_lang": T["uz"]["choose_lang"],
+    "lang_set": "✅ Language: English",
+    "choose_city": "🏙 Choose a city:",
+    "city_set": "✅ City: <b>{name}</b>",
+    "city_selected": "{name} selected",
+    "my_location": "My location",
+    "loc_saved": "✅ Your location has been saved.",
+    "need_city": "Please choose a city first 👇",
+    "api_error": "😔 Couldn't get the data. Please try again a bit later.",
+    "unknown": "Sorry, I didn't get that 🤔 Use the buttons below or /help",
+    "updating": "Refreshing...",
+    "stop_done": "🗑 Your data has been deleted and you won't get messages. To come back: /start",
+    "not_set": "not set",
+    "enabled": "Enabled ✅",
+    "disabled": "Disabled ❌",
+    "dust": "Dust",
+    "aod": "Aerosol (AOD)",
+    "warn24": ("⚠️ <b>Heads up!</b> Dust is expected to rise in the next 24 hours: "
+               "around {time} PM10 ≈ {pm10} µg/m³"),
+    "morning": "☀️ <b>Good morning!</b>\n\n",
+    "fc_title": "📈 <b>{place}: 3-day dust and weather forecast</b>\n",
+    "fc_line": "PM10 max: <b>{pm10}</b> (at {peak})  •  Dust: {dust}  •  PM2.5: {pm25}\n",
+    "fc_note": "<i>Dust in µg/m³, daily maximum. Wind: average speed and gusts.</i>",
+    "chart_title": "{place}: dust forecast (72 hours)",
+    "chart_title_wind": "{place}: dust and wind forecast (72 hours)",
+    "chart_dust": "Dust",
+    "chart_y": "µg/m³",
+    "chart_now": "now",
+    "chart_caption": ("📊 <b>{place}</b>: 3-day dust and wind chart\n"
+                      "Top: dust. Colour zones: 🟢 good → 🟣 hazardous\n"
+                      "Bottom: wind speed, gusts and direction (arrows show where the wind "
+                      "is blowing to)"),
+    "chart_caption_nowind": "📊 <b>{place}</b>: 3-day dust chart\nColour zones: 🟢 good → 🟣 hazardous",
+    "chart_wind": "Wind speed",
+    "chart_gusts": "Gusts",
+    "chart_wind_y": "m/s",
+    "chart_strong": "strong wind",
+    "chart_wait": "📊 Preparing the chart...",
+    "sub_text": (
+        "🔔 <b>Alert settings</b>\n📍 Place: <b>{place}</b>\n\n"
+        "• <b>Storm alerts</b>: I'll message you if PM10 is expected to exceed {pm10} "
+        "or dust {dust} µg/m³ in the next 24 hours. I'll also forward storm photos "
+        "taken nearby.\n"
+        "• <b>Daily report</b>: a short summary every day at {hour:02d}:00."
+    ),
+    "sub_alerts": "Storm alerts",
+    "sub_daily": "Daily report ({hour:02d}:00)",
+    "alert": (
+        "🚨 <b>DUST STORM ALERT</b>\n\n"
+        "📍 {place}\n"
+        "🕐 {when}, around {hour}\n"
+        "{emoji} PM10 ≈ <b>{pm10}</b> µg/m³ ({level})\n"
+        "🏜 Dust ≈ <b>{dust}</b> µg/m³\n\n"
+        "💡 {advice}\n\nMore: /maslahat"
+    ),
+    "today": "today",
+    "tomorrow": "tomorrow",
+    "report_prompt": (
+        "📸 <b>Report a storm</b>\n\n"
+        "If you see a dust or sand storm, <b>send a photo here</b>. "
+        "You can add a caption (e.g. \"Visibility 100 m\").\n\n"
+        "Your report will be linked to <b>{place}</b>. If you're somewhere else, "
+        "send your 📍 location first."
+    ),
+    "report_pending": "🙏 Thank you! Your photo is being reviewed. Once approved, people nearby will see it.",
+    "report_saved": "🙏 Thank you! Your report is saved and people nearby can see it.",
+    "report_limit": "⏳ You can send up to {n} reports per day. Please try again tomorrow.",
+    "report_approved": "✅ Your storm report was approved and sent to people nearby. Thank you!",
+    "report_rejected": "❌ Your storm report was not approved.",
+    "report_nearby": "📸 <b>Storm report nearby</b> ({km} km)\n📍 {place} • {time}",
+    "feed_title": "👀 <b>Storm reports from the last 24 hours</b> (within {km} km):",
+    "feed_empty": "✅ No storm reports near you in the last 24 hours.",
+    "feed_item": "📍 {place} • {time} • {km} km",
+    "tips": (
+        "💊 <b>Staying healthy during a dust storm</b>\n\n"
+        "😷 <b>Mask:</b> a regular medical mask doesn't stop dust well. "
+        "Wear an <b>N95 / FFP2</b> mask.\n"
+        "🪟 <b>Home:</b> close windows and doors, seal gaps with a damp cloth. "
+        "Turn on an air purifier if you have one.\n"
+        "💧 <b>Water:</b> drink more water, rinse your nose and eyes with clean water.\n"
+        "👓 <b>Eyes:</b> wear glasses and avoid contact lenses if you can.\n"
+        "🏃 <b>Exercise:</b> skip outdoor runs and workouts.\n"
+        "🚗 <b>Driving:</b> visibility drops. Slow down and switch the AC to "
+        "recirculation.\n\n"
+        "👶👴 <b>At-risk groups:</b> children, older people, pregnant women, and people "
+        "with asthma, heart or lung disease should stay indoors.\n"
+        "🚑 If you have shortness of breath, chest pain or a bad cough, call <b>103</b>."
+    ),
+    "info": (
+        "📚 <b>About dust and sand storms</b>\n\n"
+        "🌪 <b>A dust storm</b> happens when strong wind lifts dry soil and sand and "
+        "carries it hundreds of kilometres. Visibility can drop below 1 km.\n\n"
+        "🏜 <b>Why are they common in Uzbekistan?</b>\n"
+        "• The drying of the Aral Sea created the <b>Aralkum</b> desert, a source of "
+        "salt and dust.\n"
+        "• The nearby Kyzylkum and Karakum deserts.\n"
+        "• Drought and shrinking green areas.\n\n"
+        "🔬 <b>Measurements:</b>\n"
+        "• <b>PM10</b>: particles smaller than 10 microns (dust, sand).\n"
+        "• <b>PM2.5</b>: particles smaller than 2.5 microns. They reach deep into the "
+        "lungs and are the most harmful.\n"
+        "• <b>Dust</b>: the amount of mineral dust in the air.\n\n"
+        "📏 WHO guideline: daily average PM10 should stay below <b>45 µg/m³</b>, "
+        "PM2.5 below <b>15 µg/m³</b>.\n\n"
+        "🌳 <b>The fix:</b> planting trees and saxaul forests on the dry Aral seabed "
+        "reduces dust storms."
+    ),
+    "weather": "Weather",
+    "temp": "Temperature",
+    "feels": "feels like",
+    "humidity": "Humidity",
+    "precip": "Precipitation",
+    "wind": "Wind",
+    "gusts": "gusts",
+    "ms": "m/s",
+    "mm": "mm",
+    "wind_warn": ("💨 <b>Strong wind!</b> Gusts up to {gust} m/s ({when}, around {hour}). "
+                  "Wind can lift dust and sand."),
+    "fc_weather": ("🌡 {tmin}…{tmax}°C  {wemoji} {wdesc}\n"
+                   "☔ {psum} mm ({pprob}%)  •  💨 {wmax} m/s, gusts {gmax}  {arrow} {wdir}\n"),
+    "no_weather": "<i>Couldn't get weather data.</i>",
+}
+missing = set(T["uz"]) - set(T["en"])
+assert not missing, f"English translation missing: {missing}"
+
+
+# Har bir tugma barcha tillarda: handlerlar hammasini taniydi
 BUTTONS = {key: {T[lang][key] for lang in LANGS} for key in T["uz"] if key.startswith("btn_")}
 
 
@@ -482,6 +677,8 @@ def level(pm10: float, lang: str = "uz"):
 
 def city_name(key: str, lang: str = "uz") -> str:
     uz, ru, _, _ = CITIES[key]
+    if lang == "en":
+        return CITY_EN.get(key, uz)
     return ru if lang == "ru" else uz
 
 

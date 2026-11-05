@@ -59,7 +59,7 @@ async def get_weather(lat: float, lon: float) -> dict:
         "latitude": lat,
         "longitude": lon,
         "current": ("temperature_2m,apparent_temperature,relative_humidity_2m,precipitation,"
-                    "weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m"),
+                    "weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m,is_day"),
         "hourly": "wind_speed_10m,wind_gusts_10m,wind_direction_10m",
         "daily": ("weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,"
                   "precipitation_probability_max,wind_speed_10m_max,wind_gusts_10m_max,"

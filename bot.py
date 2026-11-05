@@ -12,7 +12,7 @@ from aiogram.enums import ChatAction
 from aiogram.exceptions import TelegramForbiddenError
 from aiogram.filters import Command, CommandStart
 from aiogram.types import (BufferedInputFile, CallbackQuery, InlineKeyboardButton,
-                           InlineKeyboardMarkup, KeyboardButton, Message,
+                           InlineKeyboardMarkup, InputMediaPhoto, KeyboardButton, Message,
                            ReplyKeyboardMarkup)
 
 
@@ -30,6 +30,7 @@ load_env()
 import api  # noqa: E402
 import db  # noqa: E402
 from chart import make_chart  # noqa: E402
+from scene import make_scene, nearest_city  # noqa: E402
 from texts import (ALERT_DUST, ALERT_PM10, BUTTONS, CITIES, LANGS, WEEKDAYS,  # noqa: E402
                    WIND_GUST_WARN, bar, city_name, level, t, weather_desc, wind_dir,
                    wind_level)
@@ -83,6 +84,7 @@ def lang_kb() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=[[
         InlineKeyboardButton(text="🇺🇿 O'zbekcha", callback_data="lang:uz"),
         InlineKeyboardButton(text="🇷🇺 Русский", callback_data="lang:ru"),
+        InlineKeyboardButton(text="🇬🇧 English", callback_data="lang:en"),
     ]])
 
 
@@ -226,6 +228,16 @@ async def fetch_all(lat: float, lon: float):
     return air, weather
 
 
+async def scene_image(u, place, lang, weather, data):
+    """Shahar manzarasi rasmini chizadi. Xato bo'lsa None qaytaradi (bot matn bilan davom etadi)."""
+    key = u["city"] if u["city"] in CITIES else (nearest_city(u["lat"], u["lon"]) or "generic")
+    try:
+        return await asyncio.to_thread(make_scene, key, place, lang, weather, data["current"])
+    except Exception:  # noqa: BLE001
+        log.exception("Rasm chizishda xato")
+        return None
+
+
 async def located_user(m: Message, uid: int):
     """Joyi tanlangan foydalanuvchini qaytaradi, aks holda shahar tanlashni so'raydi."""
     u = db.get_user(uid)
@@ -246,23 +258,52 @@ async def send_air(target: Message, uid: int, kind: str, edit: bool = False):
         await target.answer(t(lang, "api_error"))
         return
     place = place_of(u, lang)
-    if kind == "now":
-        text = now_text(place, data, lang, weather)
-    else:
+    kb = refresh_kb(kind, lang)
+    if kind != "now":
         text = forecast_text(place, data, lang, weather)
-    if edit:
-        try:
-            await target.edit_text(text, reply_markup=refresh_kb(kind, lang))
-        except Exception:  # matn o'zgarmagan bo'lsa
-            pass
-    else:
-        await target.answer(text, reply_markup=refresh_kb(kind, lang))
+        if edit:
+            try:
+                await target.edit_text(text, reply_markup=kb)
+            except Exception:  # matn o'zgarmagan bo'lsa
+                pass
+        else:
+            await target.answer(text, reply_markup=kb)
+        return
+
+    text = now_text(place, data, lang, weather)
+    img = await scene_image(u, place, lang, weather, data)
+    fits = len(text) <= 1024  # Telegram rasm izohi chegarasi
+    try:
+        if not img:
+            if edit and target.photo:
+                await target.edit_caption(caption=text if fits else None, reply_markup=kb)
+            elif edit:
+                await target.edit_text(text, reply_markup=kb)
+            else:
+                await target.answer(text, reply_markup=kb)
+        elif edit and target.photo:
+            photo = BufferedInputFile(img, "scene.jpg")
+            await target.edit_media(InputMediaPhoto(media=photo, caption=text if fits else None),
+                                    reply_markup=kb if fits else None)
+            if not fits:
+                await target.answer(text, reply_markup=kb)
+        elif edit:
+            await target.edit_text(text, reply_markup=kb)
+        elif fits:
+            await target.answer_photo(BufferedInputFile(img, "scene.jpg"), caption=text, reply_markup=kb)
+        else:
+            await target.answer_photo(BufferedInputFile(img, "scene.jpg"))
+            await target.answer(text, reply_markup=kb)
+    except Exception as e:  # noqa: BLE001
+        if "not modified" not in str(e):
+            log.warning("Xabar yuborishda xato: %s", e)
 
 
 # ---------------- Asosiy handlerlar ----------------
 @dp.message(CommandStart())
 async def cmd_start(m: Message):
-    guess = "ru" if (m.from_user.language_code or "").startswith("ru") else "uz"
+    code = (m.from_user.language_code or "")[:2]
+    guess = code if code in LANGS else "uz"
     db.ensure_user(m.from_user.id, guess)
     await m.answer(t("uz", "choose_lang"), reply_markup=lang_kb())
 
@@ -515,7 +556,7 @@ async def fallback(m: Message):
     text = (m.text or "").lower().replace("'", "").replace("‘", "").replace("ʻ", "").strip()
     if len(text) >= 4:  # foydalanuvchi shahar nomini yozgan bo'lsa
         for key, (uz, ru, lat, lon) in CITIES.items():
-            names = (key, uz.lower().replace("'", ""), ru.lower())
+            names = (key, uz.lower().replace("'", ""), ru.lower(), city_name(key, "en").lower())
             if any(text in n or n in text for n in names):
                 db.set_location(m.from_user.id, key, lat, lon)
                 await m.answer(t(lang, "city_set", name=city_name(key, lang)),
@@ -574,8 +615,20 @@ async def send_daily(bot: Bot):
     async for u, data, weather in fetch_grouped(db.users_with("daily"), with_weather=True):
         if data:
             lang = u["lang"] or "uz"
-            await safe_send(bot, u["user_id"],
-                            t(lang, "morning") + now_text(place_of(u, lang), data, lang, weather))
+            place = place_of(u, lang)
+            text = t(lang, "morning") + now_text(place, data, lang, weather)
+            img = await scene_image(u, place, lang, weather, data)
+            if img and len(text) <= 1024:
+                try:
+                    await bot.send_photo(u["user_id"], BufferedInputFile(img, "scene.jpg"), caption=text)
+                    await asyncio.sleep(0.05)
+                    continue
+                except TelegramForbiddenError:
+                    db.delete_user(u["user_id"])
+                    continue
+                except Exception as e:  # noqa: BLE001
+                    log.warning("Rasmli hisobot yuborilmadi %s: %s", u["user_id"], e)
+            await safe_send(bot, u["user_id"], text)
 
 
 async def scheduler(bot: Bot):
