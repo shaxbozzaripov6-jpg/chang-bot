@@ -48,3 +48,53 @@ def next_hours_max(data: dict, hours: int = 24) -> dict:
         return {"pm10": 0, "dust": 0, "time": now}
     i = max(range(len(pm10)), key=pm10.__getitem__)
     return {"pm10": max(pm10), "dust": max(dust), "time": h["time"][start + i]}
+
+
+WEATHER_URL = "https://api.open-meteo.com/v1/forecast"
+
+
+async def get_weather(lat: float, lon: float) -> dict:
+    """Harorat, yog'in, shamol: hozirgi holat va 3 kunlik prognoz."""
+    params = {
+        "latitude": lat,
+        "longitude": lon,
+        "current": ("temperature_2m,apparent_temperature,relative_humidity_2m,precipitation,"
+                    "weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m"),
+        "hourly": "wind_speed_10m,wind_gusts_10m",
+        "daily": ("weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,"
+                  "precipitation_probability_max,wind_speed_10m_max,wind_gusts_10m_max,"
+                  "wind_direction_10m_dominant"),
+        "wind_speed_unit": "ms",
+        "timezone": "Asia/Tashkent",
+        "forecast_days": 3,
+    }
+    timeout = aiohttp.ClientTimeout(total=20)
+    async with aiohttp.ClientSession(timeout=timeout) as s:
+        async with s.get(WEATHER_URL, params=params) as r:
+            r.raise_for_status()
+            return await r.json()
+
+
+def weather_day(weather: dict | None, date: str) -> dict | None:
+    """Kunlik ob-havo prognozidan bitta sanani qaytaradi."""
+    if not weather or "daily" not in weather:
+        return None
+    d = weather["daily"]
+    if date not in d["time"]:
+        return None
+    i = d["time"].index(date)
+    return {k: d[k][i] for k in d if k != "time"}
+
+
+def max_gust_24h(weather: dict | None) -> dict | None:
+    """Keyingi 24 soatdagi eng kuchli shamol shiddati."""
+    if not weather or "hourly" not in weather:
+        return None
+    h = weather["hourly"]
+    now = weather["current"]["time"]
+    start = next((i for i, t in enumerate(h["time"]) if t >= now), 0)
+    gusts = [(v or 0, h["time"][start + k]) for k, v in enumerate(h["wind_gusts_10m"][start:start + 24])]
+    if not gusts:
+        return None
+    g, t = max(gusts)
+    return {"gust": g, "time": t}

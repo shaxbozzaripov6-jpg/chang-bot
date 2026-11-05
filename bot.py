@@ -31,7 +31,8 @@ import api  # noqa: E402
 import db  # noqa: E402
 from chart import make_chart  # noqa: E402
 from texts import (ALERT_DUST, ALERT_PM10, BUTTONS, CITIES, LANGS, WEEKDAYS,  # noqa: E402
-                   bar, city_name, level, t)
+                   WIND_GUST_WARN, bar, city_name, level, t, weather_desc, wind_dir,
+                   wind_level)
 
 TOKEN = os.getenv("BOT_TOKEN", "")
 ADMIN_ID = int(os.getenv("ADMIN_ID") or 0)
@@ -118,7 +119,28 @@ def fmt(v) -> str:
     return "—" if v is None else f"{v:.0f}"
 
 
-def now_text(place: str, data: dict, lang: str) -> str:
+def weather_block(weather: dict | None, lang: str) -> str:
+    """Hozirgi ob-havo: harorat, yog'in, shamol."""
+    if not weather or "current" not in weather:
+        return ""
+    w = weather["current"]
+    wemoji, wdesc = weather_desc(w.get("weather_code"), lang)
+    arrow, wdir = wind_dir(w.get("wind_direction_10m"), lang)
+    ms = t(lang, "ms")
+    return (
+        f"\n{wemoji} <b>{t(lang, 'weather')}:</b> {wdesc}\n"
+        f"🌡 {t(lang, 'temp')}: <b>{fmt(w.get('temperature_2m'))}°C</b> "
+        f"({t(lang, 'feels')} {fmt(w.get('apparent_temperature'))}°C)\n"
+        f"💧 {t(lang, 'humidity')}: {fmt(w.get('relative_humidity_2m'))}%  •  "
+        f"☔ {t(lang, 'precip')}: {w.get('precipitation') or 0:.1f} {t(lang, 'mm')}\n"
+        f"💨 {t(lang, 'wind')}: <b>{w.get('wind_speed_10m') or 0:.1f} {ms}</b> "
+        f"({wind_level(w.get('wind_speed_10m'), lang)}), {t(lang, 'gusts')} "
+        f"{w.get('wind_gusts_10m') or 0:.0f} {ms}\n"
+        f"🧭 {arrow} {wdir} ({fmt(w.get('wind_direction_10m'))}°)\n"
+    )
+
+
+def now_text(place: str, data: dict, lang: str, weather: dict | None = None) -> str:
     c = data["current"]
     emoji, name, advice = level(c.get("pm10"), lang)
     nxt = api.next_hours_max(data, 24)
@@ -132,24 +154,44 @@ def now_text(place: str, data: dict, lang: str) -> str:
     aod = c.get("aerosol_optical_depth")
     if aod is not None:
         text += f"🌁 {t(lang, 'aod')}: <b>{aod:.2f}</b>\n"
+    text += weather_block(weather, lang)
     text += f"\n💡 {advice}"
     if nxt["pm10"] >= ALERT_PM10 or nxt["dust"] >= ALERT_DUST:
         text += "\n\n" + t(lang, "warn24", time=nxt["time"].split("T")[1], pm10=f"{nxt['pm10']:.0f}")
+    gust = api.max_gust_24h(weather)
+    if gust and gust["gust"] >= WIND_GUST_WARN:
+        day, hour = gust["time"].split("T")
+        when = t(lang, "today") if day == datetime.now(TZ).strftime("%Y-%m-%d") else t(lang, "tomorrow")
+        text += "\n\n" + t(lang, "wind_warn", gust=f"{gust['gust']:.0f}", when=when, hour=hour)
     return text
 
 
-def forecast_text(place: str, data: dict, lang: str) -> str:
+def forecast_text(place: str, data: dict, lang: str, weather: dict | None = None) -> str:
     lines = [t(lang, "fc_title", place=place)]
     days = WEEKDAYS.get(lang, WEEKDAYS["uz"])
     for d in api.daily_summary(data):
         dt = datetime.strptime(d["date"], "%Y-%m-%d")
         emoji, name, _ = level(d["pm10"], lang)
-        lines.append(
+        day_text = (
             f"<b>{days[dt.weekday()]}, {dt:%d.%m}</b>\n"
             f"{emoji} {name}  {bar(d['pm10'])}\n"
             + t(lang, "fc_line", pm10=f"{d['pm10']:.0f}", peak=d["peak"],
                 dust=f"{d['dust']:.0f}", pm25=f"{d['pm2_5']:.0f}")
         )
+        w = api.weather_day(weather, d["date"])
+        if w:
+            wemoji, wdesc = weather_desc(w.get("weather_code"), lang)
+            arrow, wdir = wind_dir(w.get("wind_direction_10m_dominant"), lang)
+            day_text += t(lang, "fc_weather",
+                          tmin=fmt(w.get("temperature_2m_min")), tmax=fmt(w.get("temperature_2m_max")),
+                          wemoji=wemoji, wdesc=wdesc,
+                          psum=f"{w.get('precipitation_sum') or 0:.1f}",
+                          pprob=fmt(w.get("precipitation_probability_max")),
+                          wmax=fmt(w.get("wind_speed_10m_max")), gmax=fmt(w.get("wind_gusts_10m_max")),
+                          arrow=arrow, wdir=wdir)
+        lines.append(day_text)
+    if weather is None:
+        lines.append(t(lang, "no_weather"))
     lines.append(t(lang, "fc_note"))
     return "\n".join(lines)
 
@@ -171,6 +213,19 @@ def report_caption(lang: str, header_key: str, r, km: float) -> str:
 
 
 # ---------------- Yordamchi ----------------
+async def fetch_all(lat: float, lon: float):
+    """Chang va ob-havo ma'lumotini bir vaqtda oladi. Ob-havo xatosi botni to'xtatmaydi."""
+    air, weather = await asyncio.gather(api.get_air(lat, lon), api.get_weather(lat, lon),
+                                        return_exceptions=True)
+    if isinstance(air, Exception):
+        log.warning("Chang API xatosi: %s", air)
+        air = None
+    if isinstance(weather, Exception):
+        log.warning("Ob-havo API xatosi: %s", weather)
+        weather = None
+    return air, weather
+
+
 async def located_user(m: Message, uid: int):
     """Joyi tanlangan foydalanuvchini qaytaradi, aks holda shahar tanlashni so'raydi."""
     u = db.get_user(uid)
@@ -186,14 +241,15 @@ async def send_air(target: Message, uid: int, kind: str, edit: bool = False):
     if not u:
         return
     lang = u["lang"] or "uz"
-    try:
-        data = await api.get_air(u["lat"], u["lon"])
-    except Exception as e:  # noqa: BLE001
-        log.warning("API xatosi: %s", e)
+    data, weather = await fetch_all(u["lat"], u["lon"])
+    if not data:
         await target.answer(t(lang, "api_error"))
         return
     place = place_of(u, lang)
-    text = now_text(place, data, lang) if kind == "now" else forecast_text(place, data, lang)
+    if kind == "now":
+        text = now_text(place, data, lang, weather)
+    else:
+        text = forecast_text(place, data, lang, weather)
     if edit:
         try:
             await target.edit_text(text, reply_markup=refresh_kb(kind, lang))
@@ -467,19 +523,23 @@ async def fallback(m: Message):
 
 
 # ---------------- Avtomatik xabarlar ----------------
-async def fetch_grouped(users):
+async def fetch_grouped(users, with_weather: bool = False):
     """Bir xil koordinatadagi foydalanuvchilar uchun API'ga bir marta murojaat qilamiz."""
     cache = {}
     for u in users:
         key = (round(u["lat"], 2), round(u["lon"], 2))
         if key not in cache:
-            try:
-                cache[key] = await api.get_air(u["lat"], u["lon"])
-            except Exception as e:  # noqa: BLE001
-                log.warning("API xatosi %s: %s", key, e)
-                cache[key] = None
+            if with_weather:
+                cache[key] = await fetch_all(u["lat"], u["lon"])
+            else:
+                try:
+                    cache[key] = (await api.get_air(u["lat"], u["lon"]), None)
+                except Exception as e:  # noqa: BLE001
+                    log.warning("API xatosi %s: %s", key, e)
+                    cache[key] = (None, None)
             await asyncio.sleep(0.3)
-        yield u, cache[key]
+        data, weather = cache[key]
+        yield u, data, weather
 
 
 async def safe_send(bot: Bot, uid: int, text: str):
@@ -494,7 +554,7 @@ async def safe_send(bot: Bot, uid: int, text: str):
 
 async def check_alerts(bot: Bot):
     now = datetime.now(TZ)
-    async for u, data in fetch_grouped(db.users_with("alerts")):
+    async for u, data, _ in fetch_grouped(db.users_with("alerts")):
         if not data:
             continue
         nxt = api.next_hours_max(data, 24)
@@ -509,11 +569,11 @@ async def check_alerts(bot: Bot):
 
 
 async def send_daily(bot: Bot):
-    async for u, data in fetch_grouped(db.users_with("daily")):
+    async for u, data, weather in fetch_grouped(db.users_with("daily"), with_weather=True):
         if data:
             lang = u["lang"] or "uz"
             await safe_send(bot, u["user_id"],
-                            t(lang, "morning") + now_text(place_of(u, lang), data, lang))
+                            t(lang, "morning") + now_text(place_of(u, lang), data, lang, weather))
 
 
 async def scheduler(bot: Bot):

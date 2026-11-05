@@ -115,9 +115,9 @@ T = {
                    "soat {time} atrofida PM10 ≈ {pm10} µg/m³"),
         "morning": "☀️ <b>Xayrli tong!</b>\n\n",
         # prognoz
-        "fc_title": "📈 <b>{place}: 3 kunlik chang prognozi</b>\n",
+        "fc_title": "📈 <b>{place}: 3 kunlik chang va ob-havo prognozi</b>\n",
         "fc_line": "PM10 maks: <b>{pm10}</b> (soat {peak})  •  Chang: {dust}  •  PM2.5: {pm25}\n",
-        "fc_note": "<i>Qiymatlar µg/m³ da, kunning eng yuqori ko'rsatkichi.</i>",
+        "fc_note": "<i>Chang µg/m³ da, kunning eng yuqori ko'rsatkichi. Shamol: o'rtacha tezlik va shiddat.</i>",
         # grafik
         "chart_title": "{place}: chang prognozi (72 soat)",
         "chart_dust": "Chang",
@@ -254,9 +254,9 @@ T = {
         "warn24": ("⚠️ <b>Внимание!</b> В ближайшие 24 часа ожидается усиление пыли: "
                    "около {time} PM10 ≈ {pm10} µg/m³"),
         "morning": "☀️ <b>Доброе утро!</b>\n\n",
-        "fc_title": "📈 <b>{place}: прогноз пыли на 3 дня</b>\n",
+        "fc_title": "📈 <b>{place}: прогноз пыли и погоды на 3 дня</b>\n",
         "fc_line": "PM10 макс: <b>{pm10}</b> (в {peak})  •  Пыль: {dust}  •  PM2.5: {pm25}\n",
-        "fc_note": "<i>Значения в µg/m³, максимальные за день.</i>",
+        "fc_note": "<i>Пыль в µg/m³, максимум за день. Ветер: средняя скорость и порывы.</i>",
         "chart_title": "{place}: прогноз пыли (72 часа)",
         "chart_dust": "Пыль",
         "chart_y": "µg/m³",
@@ -332,6 +332,113 @@ T = {
         ),
     },
 }
+
+# ---------------- Ob-havo matnlari ----------------
+WEATHER_T = {
+    "uz": {
+        "weather": "Ob-havo",
+        "temp": "Harorat",
+        "feels": "his qilinadi",
+        "humidity": "Namlik",
+        "precip": "Yog'in",
+        "wind": "Shamol",
+        "gusts": "shiddati",
+        "ms": "m/s",
+        "mm": "mm",
+        "wind_warn": ("💨 <b>Kuchli shamol!</b> Shiddati {gust} m/s gacha ({when}, soat {hour} atrofida). "
+                      "Shamol chang va qum ko'tarishi mumkin."),
+        "fc_weather": ("🌡 {tmin}…{tmax}°C  {wemoji} {wdesc}\n"
+                       "☔ {psum} mm ({pprob}%)  •  💨 {wmax} m/s, shiddati {gmax}  {arrow} {wdir}\n"),
+        "no_weather": "<i>Ob-havo ma'lumotini olib bo'lmadi.</i>",
+    },
+    "ru": {
+        "weather": "Погода",
+        "temp": "Температура",
+        "feels": "ощущается",
+        "humidity": "Влажность",
+        "precip": "Осадки",
+        "wind": "Ветер",
+        "gusts": "порывы",
+        "ms": "м/с",
+        "mm": "мм",
+        "wind_warn": ("💨 <b>Сильный ветер!</b> Порывы до {gust} м/с ({when}, около {hour}). "
+                      "Ветер может поднять пыль и песок."),
+        "fc_weather": ("🌡 {tmin}…{tmax}°C  {wemoji} {wdesc}\n"
+                       "☔ {psum} мм ({pprob}%)  •  💨 {wmax} м/с, порывы {gmax}  {arrow} {wdir}\n"),
+        "no_weather": "<i>Не удалось получить данные о погоде.</i>",
+    },
+}
+for _lang in LANGS:
+    T[_lang].update(WEATHER_T[_lang])
+
+WIND_GUST_WARN = 15  # m/s: shundan kuchli shamol shiddati bo'lsa ogohlantiramiz
+
+# WMO ob-havo kodlari: kod -> (emoji, o'zbekcha, ruscha)
+WEATHER_CODES = {
+    0: ("☀️", "Ochiq osmon", "Ясно"),
+    1: ("🌤", "Asosan ochiq", "Преимущественно ясно"),
+    2: ("⛅", "Qisman bulutli", "Переменная облачность"),
+    3: ("☁️", "Bulutli", "Пасмурно"),
+    45: ("🌫", "Tuman", "Туман"),
+    48: ("🌫", "Qirovli tuman", "Изморозь, туман"),
+    51: ("🌦", "Yengil shivalama", "Слабая морось"),
+    53: ("🌦", "Shivalama", "Морось"),
+    55: ("🌧", "Kuchli shivalama", "Сильная морось"),
+    56: ("🌧", "Muzlovchi shivalama", "Ледяная морось"),
+    57: ("🌧", "Muzlovchi shivalama", "Ледяная морось"),
+    61: ("🌦", "Yengil yomg'ir", "Небольшой дождь"),
+    63: ("🌧", "Yomg'ir", "Дождь"),
+    65: ("🌧", "Kuchli yomg'ir", "Сильный дождь"),
+    66: ("🌧", "Muzlovchi yomg'ir", "Ледяной дождь"),
+    67: ("🌧", "Muzlovchi yomg'ir", "Ледяной дождь"),
+    71: ("🌨", "Yengil qor", "Небольшой снег"),
+    73: ("🌨", "Qor", "Снег"),
+    75: ("❄️", "Kuchli qor", "Сильный снег"),
+    77: ("🌨", "Qor donalari", "Снежная крупа"),
+    80: ("🌦", "Jala", "Ливень"),
+    81: ("🌧", "Kuchli jala", "Сильный ливень"),
+    82: ("⛈", "Juda kuchli jala", "Очень сильный ливень"),
+    85: ("🌨", "Qor yog'ishi", "Снегопад"),
+    86: ("❄️", "Kuchli qor yog'ishi", "Сильный снегопад"),
+    95: ("⛈", "Momaqaldiroq", "Гроза"),
+    96: ("⛈", "Do'lli momaqaldiroq", "Гроза с градом"),
+    99: ("⛈", "Kuchli do'lli momaqaldiroq", "Сильная гроза с градом"),
+}
+
+# Shamol qayerdan esayotgani (8 yo'nalish). Strelka shamol qayoqqa esayotganini ko'rsatadi.
+WIND_DIRS = {
+    "uz": ["Shimoliy", "Shimoli-sharqiy", "Sharqiy", "Janubi-sharqiy",
+           "Janubiy", "Janubi-g'arbiy", "G'arbiy", "Shimoli-g'arbiy"],
+    "ru": ["Северный", "Северо-восточный", "Восточный", "Юго-восточный",
+           "Южный", "Юго-западный", "Западный", "Северо-западный"],
+}
+WIND_ARROWS = ["↓", "↙", "←", "↖", "↑", "↗", "→", "↘"]
+
+WIND_LEVELS = {  # (chegara m/s, nomi)
+    "uz": [(3, "sokin"), (6, "kuchsiz"), (10, "o'rtacha"), (15, "kuchli"), (10**9, "juda kuchli")],
+    "ru": [(3, "штиль"), (6, "слабый"), (10, "умеренный"), (15, "сильный"), (10**9, "очень сильный")],
+}
+
+
+def weather_desc(code, lang: str = "uz"):
+    emoji, uz, ru = WEATHER_CODES.get(code, ("🌡", "—", "—"))
+    return emoji, (ru if lang == "ru" else uz)
+
+
+def wind_dir(deg, lang: str = "uz"):
+    """Gradusni yo'nalish nomi va strelkaga aylantiradi."""
+    if deg is None:
+        return "", "—"
+    i = round(deg / 45) % 8
+    return WIND_ARROWS[i], WIND_DIRS.get(lang, WIND_DIRS["uz"])[i]
+
+
+def wind_level(speed, lang: str = "uz") -> str:
+    for limit, name in WIND_LEVELS.get(lang, WIND_LEVELS["uz"]):
+        if (speed or 0) < limit:
+            return name
+    return ""
+
 
 # Har bir tugma ikkala tilda: handlerlar ikkalasini ham taniydi
 BUTTONS = {key: {T[lang][key] for lang in LANGS} for key in T["uz"] if key.startswith("btn_")}

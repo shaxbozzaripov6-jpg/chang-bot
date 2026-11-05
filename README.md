@@ -4,9 +4,10 @@ Bu bot O'zbekiston shaharlarida chang darajasini (PM10, PM2.5, chang) ko'rsatadi
 
 **Imkoniyatlar:**
 - 🌐 **Ikki til**: o'zbekcha va ruscha (/til)
+- 🌤 **Ob-havo**: harorat, namlik, yog'in, shamol tezligi va yo'nalishi; kuchli shamol (shiddati 15 m/s dan yuqori) haqida ogohlantirish
 - 📊 **Grafik**: 72 soatlik chang prognozi rasm ko'rinishida (/grafik)
 - 📸 **Bo'ron xabarlari**: foydalanuvchilar bo'ron rasmini yuboradi, admin tasdiqlaydi va bot rasmni 100 km radiusdagi obunachilarga jo'natadi (/xabar, /xabarlar)
-Ma'lumotlar bepul Open-Meteo / Copernicus CAMS xizmatidan olinadi, buning uchun API kalit kerak emas.
+Chang va ob-havo ma'lumotlari bepul Open-Meteo / Copernicus CAMS xizmatidan olinadi, buning uchun API kalit kerak emas.
 
 ## Papkada nimalar bor
 
