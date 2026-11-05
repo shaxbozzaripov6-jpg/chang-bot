@@ -1,100 +1,365 @@
-"""Shaharlar, darajalar, maslahatlar va matnlar."""
+"""Shaharlar, darajalar va barcha matnlar (o'zbek va rus tillarida).
 
+Bot gaplarini o'zgartirish uchun shu faylni tahrirlang.
+"""
+
+LANGS = ("uz", "ru")
+
+# kalit: (o'zbekcha nom, ruscha nom, kenglik, uzunlik)
 CITIES = {
-    "toshkent":  ("Toshkent",   41.311, 69.240),
-    "nukus":     ("Nukus",      42.460, 59.603),
-    "moynoq":    ("Mo'ynoq",    43.768, 59.022),
-    "urganch":   ("Urganch",    41.550, 60.631),
-    "buxoro":    ("Buxoro",     39.768, 64.421),
-    "navoiy":    ("Navoiy",     40.084, 65.379),
-    "samarqand": ("Samarqand",  39.654, 66.959),
-    "qarshi":    ("Qarshi",     38.861, 65.789),
-    "termiz":    ("Termiz",     37.224, 67.278),
-    "jizzax":    ("Jizzax",     40.116, 67.842),
-    "guliston":  ("Guliston",   40.490, 68.784),
-    "namangan":  ("Namangan",   40.998, 71.672),
-    "andijon":   ("Andijon",    40.783, 72.344),
-    "fargona":   ("Farg'ona",   40.384, 71.784),
+    "toshkent":  ("Toshkent",  "Ташкент",   41.311, 69.240),
+    "nukus":     ("Nukus",     "Нукус",     42.460, 59.603),
+    "moynoq":    ("Mo'ynoq",   "Муйнак",    43.768, 59.022),
+    "urganch":   ("Urganch",   "Ургенч",    41.550, 60.631),
+    "buxoro":    ("Buxoro",    "Бухара",    39.768, 64.421),
+    "navoiy":    ("Navoiy",    "Навои",     40.084, 65.379),
+    "samarqand": ("Samarqand", "Самарканд", 39.654, 66.959),
+    "qarshi":    ("Qarshi",    "Карши",     38.861, 65.789),
+    "termiz":    ("Termiz",    "Термез",    37.224, 67.278),
+    "jizzax":    ("Jizzax",    "Джизак",    40.116, 67.842),
+    "guliston":  ("Guliston",  "Гулистан",  40.490, 68.784),
+    "namangan":  ("Namangan",  "Наманган",  40.998, 71.672),
+    "andijon":   ("Andijon",   "Андижан",   40.783, 72.344),
+    "fargona":   ("Farg'ona",  "Фергана",   40.384, 71.784),
 }
-
-# PM10 (µg/m³) bo'yicha darajalar
-LEVELS = [
-    (50,  "🟢", "Yaxshi",        "Havo toza. Bemalol sayr qilishingiz mumkin."),
-    (100, "🟡", "O'rtacha",      "Sezgir odamlar (astma, allergiya) ehtiyot bo'lsin."),
-    (250, "🟠", "Yomon",         "Uzoq vaqt tashqarida bo'lmang, sport bilan uyda shug'ullaning."),
-    (430, "🔴", "Juda yomon",    "Niqob taqing (N95/FFP2), derazalarni yoping."),
-    (10**9, "🟣", "Xavfli",      "Qum-chang bo'roni! Zarurat bo'lmasa tashqariga chiqmang."),
-]
 
 ALERT_PM10 = 250   # shu qiymatdan oshsa ogohlantirish yuboriladi
 ALERT_DUST = 200
 
+# PM10 (µg/m³) chegaralari va ranglari (grafik uchun ham ishlatiladi)
+LEVEL_LIMITS = [50, 100, 250, 430, 10**9]
+LEVEL_EMOJI = ["🟢", "🟡", "🟠", "🔴", "🟣"]
+LEVEL_COLORS = ["#4caf50", "#fbc02d", "#fb8c00", "#e53935", "#8e24aa"]
 
-def level(pm10: float):
-    for limit, emoji, name, advice in LEVELS:
+LEVELS = {
+    "uz": [
+        ("Yaxshi", "Havo toza. Bemalol sayr qilishingiz mumkin."),
+        ("O'rtacha", "Sezgir odamlar (astma, allergiya) ehtiyot bo'lsin."),
+        ("Yomon", "Uzoq vaqt tashqarida bo'lmang, sport bilan uyda shug'ullaning."),
+        ("Juda yomon", "Niqob taqing (N95/FFP2), derazalarni yoping."),
+        ("Xavfli", "Qum-chang bo'roni! Zarurat bo'lmasa tashqariga chiqmang."),
+    ],
+    "ru": [
+        ("Хорошо", "Воздух чистый. Можно спокойно гулять."),
+        ("Умеренно", "Чувствительным людям (астма, аллергия) стоит быть осторожнее."),
+        ("Плохо", "Не находитесь долго на улице, занимайтесь спортом дома."),
+        ("Очень плохо", "Наденьте маску (N95/FFP2), закройте окна."),
+        ("Опасно", "Пыльная буря! Без необходимости не выходите на улицу."),
+    ],
+}
+
+WEEKDAYS = {
+    "uz": ["Dushanba", "Seshanba", "Chorshanba", "Payshanba", "Juma", "Shanba", "Yakshanba"],
+    "ru": ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье"],
+}
+
+T = {
+    "uz": {
+        # tugmalar
+        "btn_now": "🌫 Hozirgi holat",
+        "btn_fc": "📈 Prognoz",
+        "btn_chart": "📊 Grafik",
+        "btn_city": "🏙 Shahar",
+        "btn_loc": "📍 Lokatsiya",
+        "btn_report": "📸 Bo'ron xabari",
+        "btn_feed": "👀 Xabarlar",
+        "btn_sub": "🔔 Obuna",
+        "btn_tips": "💊 Maslahatlar",
+        "btn_info": "📚 Ma'lumot",
+        "btn_lang": "🌐 Til / Язык",
+        "btn_refresh": "🔄 Yangilash",
+        # umumiy
+        "start": (
+            "Assalomu alaykum, {name}! 👋\n\n"
+            "Men <b>Chang Monitor</b> botiman 🌪\n"
+            "O'zbekiston shaharlari bo'yicha <b>chang va qum bo'ronlari</b> haqida "
+            "ma'lumot, prognoz, grafik va ogohlantirishlar beraman.\n\n"
+            "📸 Bo'ronni o'z ko'zingiz bilan ko'rsangiz, rasmini yuboring: "
+            "boshqalarni ogohlantiramiz!\n\n"
+            "Boshlash uchun shahringizni tanlang yoki 📍 lokatsiya yuboring 👇"
+        ),
+        "help": (
+            "<b>Buyruqlar:</b>\n"
+            "/havo: hozirgi chang holati\n"
+            "/prognoz: 3 kunlik prognoz\n"
+            "/grafik: chang grafigi\n"
+            "/shahar: shaharni tanlash\n"
+            "/xabar: bo'ron rasmini yuborish\n"
+            "/xabarlar: yaqin atrofdagi bo'ron xabarlari\n"
+            "/obuna: ogohlantirish va kunlik hisobot\n"
+            "/maslahat: sog'liq bo'yicha maslahatlar\n"
+            "/malumot: chang bo'ronlari haqida\n"
+            "/til: tilni o'zgartirish\n"
+            "/stop: barcha ma'lumotlarimni o'chirish\n\n"
+            "Ma'lumot manbasi: Open-Meteo / Copernicus CAMS."
+        ),
+        "choose_lang": "🌐 Tilni tanlang / Выберите язык:",
+        "lang_set": "✅ Til: O'zbekcha",
+        "choose_city": "🏙 Shaharni tanlang:",
+        "city_set": "✅ Shahar: <b>{name}</b>",
+        "city_selected": "{name} tanlandi",
+        "my_location": "Joylashuvim",
+        "loc_saved": "✅ Joylashuvingiz saqlandi.",
+        "need_city": "Avval shaharni tanlang 👇",
+        "api_error": "😔 Ma'lumot olishda xatolik. Birozdan keyin qayta urinib ko'ring.",
+        "unknown": "Tushunmadim 🤔 Quyidagi tugmalardan foydalaning yoki /help",
+        "updating": "Yangilanmoqda...",
+        "stop_done": "🗑 Ma'lumotlaringiz o'chirildi, xabarlar yuborilmaydi. Qaytish uchun /start",
+        "not_set": "tanlanmagan",
+        "enabled": "Yoqildi ✅",
+        "disabled": "O'chirildi ❌",
+        # hozirgi holat
+        "dust": "Chang",
+        "aod": "Aerozol (AOD)",
+        "warn24": ("⚠️ <b>Diqqat!</b> Keyingi 24 soatda chang kuchayishi kutilmoqda: "
+                   "soat {time} atrofida PM10 ≈ {pm10} µg/m³"),
+        "morning": "☀️ <b>Xayrli tong!</b>\n\n",
+        # prognoz
+        "fc_title": "📈 <b>{place}: 3 kunlik chang prognozi</b>\n",
+        "fc_line": "PM10 maks: <b>{pm10}</b> (soat {peak})  •  Chang: {dust}  •  PM2.5: {pm25}\n",
+        "fc_note": "<i>Qiymatlar µg/m³ da, kunning eng yuqori ko'rsatkichi.</i>",
+        # grafik
+        "chart_title": "{place}: chang prognozi (72 soat)",
+        "chart_dust": "Chang",
+        "chart_y": "µg/m³",
+        "chart_now": "hozir",
+        "chart_caption": "📊 <b>{place}</b>: 3 kunlik chang grafigi\nRangli zonalar: 🟢 yaxshi → 🟣 xavfli",
+        "chart_wait": "📊 Grafik tayyorlanmoqda...",
+        # obuna
+        "sub_text": (
+            "🔔 <b>Obuna sozlamalari</b>\n📍 Joy: <b>{place}</b>\n\n"
+            "• <b>Ogohlantirish</b>: keyingi 24 soatda PM10 {pm10} dan yoki chang "
+            "{dust} µg/m³ dan oshsa xabar beraman. Yaqin atrofdan bo'ron rasmlari "
+            "kelsa, ularni ham yuboraman.\n"
+            "• <b>Kunlik hisobot</b>: har kuni soat {hour:02d}:00 da qisqa ma'lumot."
+        ),
+        "sub_alerts": "Bo'ron ogohlantirishlari",
+        "sub_daily": "Kunlik hisobot ({hour:02d}:00)",
+        # ogohlantirish
+        "alert": (
+            "🚨 <b>CHANG BO'RONI OGOHLANTIRISHI</b>\n\n"
+            "📍 {place}\n"
+            "🕐 {when}, soat {hour} atrofida\n"
+            "{emoji} PM10 ≈ <b>{pm10}</b> µg/m³ ({level})\n"
+            "🏜 Chang ≈ <b>{dust}</b> µg/m³\n\n"
+            "💡 {advice}\n\nBatafsil: /maslahat"
+        ),
+        "today": "bugun",
+        "tomorrow": "ertaga",
+        # bo'ron xabarlari
+        "report_prompt": (
+            "📸 <b>Bo'ron xabarini yuborish</b>\n\n"
+            "Chang yoki qum bo'ronini ko'rsangiz, <b>rasmini shu yerga yuboring</b>. "
+            "Rasm ostiga izoh ham yozishingiz mumkin (masalan: \"Ko'rinish 100 m\").\n\n"
+            "Xabaringiz <b>{place}</b> joyiga bog'lanadi. Boshqa joy bo'lsa, avval "
+            "📍 lokatsiya yuboring."
+        ),
+        "report_pending": "🙏 Rahmat! Rasmingiz tekshiruvga yuborildi. Tasdiqlangach, yaqin atrofdagilar ko'radi.",
+        "report_saved": "🙏 Rahmat! Xabaringiz saqlandi, yaqin atrofdagilar uni ko'ra oladi.",
+        "report_limit": "⏳ Bir kunda ko'pi bilan {n} ta xabar yuborish mumkin. Ertaga yana urinib ko'ring.",
+        "report_approved": "✅ Bo'ron xabaringiz tasdiqlandi va yaqin atrofdagilarga yuborildi. Rahmat!",
+        "report_rejected": "❌ Bo'ron xabaringiz tasdiqlanmadi.",
+        "report_nearby": "📸 <b>Yaqin atrofdan bo'ron xabari</b> ({km} km)\n📍 {place} • {time}",
+        "feed_title": "👀 <b>So'nggi 24 soatdagi bo'ron xabarlari</b> ({km} km radiusda):",
+        "feed_empty": "✅ So'nggi 24 soatda yaqin atrofingizdan bo'ron xabarlari kelmagan.",
+        "feed_item": "📍 {place} • {time} • {km} km",
+        # maslahat va ma'lumot
+        "tips": (
+            "💊 <b>Chang bo'ronida sog'likni saqlash</b>\n\n"
+            "😷 <b>Niqob:</b> oddiy tibbiy niqob changdan yaxshi himoya qilmaydi, "
+            "<b>N95 / FFP2</b> niqob taqing.\n"
+            "🪟 <b>Uy:</b> deraza va eshiklarni yoping, tirqishlarni ho'l latta bilan bekiting. "
+            "Havo tozalagich bo'lsa, yoqing.\n"
+            "💧 <b>Suv:</b> ko'proq suv iching, burun va ko'zni toza suv bilan yuving.\n"
+            "👓 <b>Ko'z:</b> ko'zoynak taqing, linza taqmaslikka harakat qiling.\n"
+            "🏃 <b>Sport:</b> tashqarida yugurish va mashq qilishni to'xtating.\n"
+            "🚗 <b>Mashina:</b> ko'rinish yomonlashadi. Tezlikni kamaytiring, "
+            "konditsionerni ichki aylanish rejimiga qo'ying.\n\n"
+            "👶👴 <b>Xavf guruhi:</b> bolalar, keksalar, homiladorlar, astma, yurak va o'pka "
+            "kasalligi borlar uyda qolishi kerak.\n"
+            "🚑 Nafas qisishi, ko'krak og'rig'i yoki kuchli yo'tal bo'lsa, <b>103</b> ga qo'ng'iroq qiling."
+        ),
+        "info": (
+            "📚 <b>Chang va qum bo'ronlari haqida</b>\n\n"
+            "🌪 <b>Chang bo'roni</b>: kuchli shamol quruq tuproq va qumni havoga ko'tarib, "
+            "yuzlab kilometrga olib ketadi. Ko'rinish 1 km dan kam bo'lishi mumkin.\n\n"
+            "🏜 <b>O'zbekistonda nega ko'p?</b>\n"
+            "• Orol dengizi qurishi natijasida <b>Orolqum</b> cho'li paydo bo'ldi. U tuz va "
+            "chang manbai.\n"
+            "• Qizilqum va Qoraqum cho'llari yaqinligi.\n"
+            "• Qurg'oqchilik va yashil maydonlarning kamayishi.\n\n"
+            "🔬 <b>Ko'rsatkichlar:</b>\n"
+            "• <b>PM10</b>: diametri 10 mikrondan kichik zarrachalar (chang, qum).\n"
+            "• <b>PM2.5</b>: 2.5 mikrondan kichik zarrachalar. O'pkaga chuqur kiradi, eng xavflisi shu.\n"
+            "• <b>Chang (dust)</b>: havodagi mineral chang miqdori.\n\n"
+            "📏 JSST (WHO) tavsiyasi: PM10 sutkalik o'rtacha <b>45 µg/m³</b> dan, "
+            "PM2.5 esa <b>15 µg/m³</b> dan oshmasligi kerak.\n\n"
+            "🌳 <b>Yechim:</b> daraxt ekish va Orol tubida saksovul o'rmonlari barpo etish "
+            "chang bo'ronlarini kamaytiradi."
+        ),
+    },
+    "ru": {
+        "btn_now": "🌫 Сейчас",
+        "btn_fc": "📈 Прогноз",
+        "btn_chart": "📊 График",
+        "btn_city": "🏙 Город",
+        "btn_loc": "📍 Геолокация",
+        "btn_report": "📸 Сообщить о буре",
+        "btn_feed": "👀 Сообщения",
+        "btn_sub": "🔔 Подписка",
+        "btn_tips": "💊 Советы",
+        "btn_info": "📚 Информация",
+        "btn_lang": "🌐 Til / Язык",
+        "btn_refresh": "🔄 Обновить",
+        "start": (
+            "Здравствуйте, {name}! 👋\n\n"
+            "Я бот <b>Chang Monitor</b> 🌪\n"
+            "Показываю уровень <b>пыли и пыльных бурь</b> в городах Узбекистана: "
+            "текущие данные, прогноз, графики и предупреждения.\n\n"
+            "📸 Видите бурю своими глазами? Пришлите фото, и мы предупредим других!\n\n"
+            "Для начала выберите город или отправьте 📍 геолокацию 👇"
+        ),
+        "help": (
+            "<b>Команды:</b>\n"
+            "/havo: текущий уровень пыли\n"
+            "/prognoz: прогноз на 3 дня\n"
+            "/grafik: график пыли\n"
+            "/shahar: выбрать город\n"
+            "/xabar: отправить фото бури\n"
+            "/xabarlar: сообщения о бурях поблизости\n"
+            "/obuna: предупреждения и ежедневный отчёт\n"
+            "/maslahat: советы для здоровья\n"
+            "/malumot: о пыльных бурях\n"
+            "/til: сменить язык\n"
+            "/stop: удалить все мои данные\n\n"
+            "Источник данных: Open-Meteo / Copernicus CAMS."
+        ),
+        "choose_lang": "🌐 Tilni tanlang / Выберите язык:",
+        "lang_set": "✅ Язык: Русский",
+        "choose_city": "🏙 Выберите город:",
+        "city_set": "✅ Город: <b>{name}</b>",
+        "city_selected": "Выбран город {name}",
+        "my_location": "Моё местоположение",
+        "loc_saved": "✅ Ваше местоположение сохранено.",
+        "need_city": "Сначала выберите город 👇",
+        "api_error": "😔 Не удалось получить данные. Попробуйте чуть позже.",
+        "unknown": "Не понял 🤔 Воспользуйтесь кнопками ниже или /help",
+        "updating": "Обновляю...",
+        "stop_done": "🗑 Ваши данные удалены, сообщения больше не придут. Чтобы вернуться: /start",
+        "not_set": "не выбран",
+        "enabled": "Включено ✅",
+        "disabled": "Выключено ❌",
+        "dust": "Пыль",
+        "aod": "Аэрозоль (AOD)",
+        "warn24": ("⚠️ <b>Внимание!</b> В ближайшие 24 часа ожидается усиление пыли: "
+                   "около {time} PM10 ≈ {pm10} µg/m³"),
+        "morning": "☀️ <b>Доброе утро!</b>\n\n",
+        "fc_title": "📈 <b>{place}: прогноз пыли на 3 дня</b>\n",
+        "fc_line": "PM10 макс: <b>{pm10}</b> (в {peak})  •  Пыль: {dust}  •  PM2.5: {pm25}\n",
+        "fc_note": "<i>Значения в µg/m³, максимальные за день.</i>",
+        "chart_title": "{place}: прогноз пыли (72 часа)",
+        "chart_dust": "Пыль",
+        "chart_y": "µg/m³",
+        "chart_now": "сейчас",
+        "chart_caption": "📊 <b>{place}</b>: график пыли на 3 дня\nЦветные зоны: 🟢 хорошо → 🟣 опасно",
+        "chart_wait": "📊 Готовлю график...",
+        "sub_text": (
+            "🔔 <b>Настройки подписки</b>\n📍 Место: <b>{place}</b>\n\n"
+            "• <b>Предупреждения</b>: сообщу, если в ближайшие 24 часа PM10 превысит {pm10} "
+            "или пыль превысит {dust} µg/m³. Также пришлю фото бурь, сделанные поблизости.\n"
+            "• <b>Ежедневный отчёт</b>: каждый день в {hour:02d}:00 краткая сводка."
+        ),
+        "sub_alerts": "Предупреждения о бурях",
+        "sub_daily": "Ежедневный отчёт ({hour:02d}:00)",
+        "alert": (
+            "🚨 <b>ПРЕДУПРЕЖДЕНИЕ О ПЫЛЬНОЙ БУРЕ</b>\n\n"
+            "📍 {place}\n"
+            "🕐 {when}, около {hour}\n"
+            "{emoji} PM10 ≈ <b>{pm10}</b> µg/m³ ({level})\n"
+            "🏜 Пыль ≈ <b>{dust}</b> µg/m³\n\n"
+            "💡 {advice}\n\nПодробнее: /maslahat"
+        ),
+        "today": "сегодня",
+        "tomorrow": "завтра",
+        "report_prompt": (
+            "📸 <b>Сообщить о буре</b>\n\n"
+            "Если видите пыльную или песчаную бурю, <b>пришлите сюда фото</b>. "
+            "Можно добавить подпись (например: \"Видимость 100 м\").\n\n"
+            "Сообщение будет привязано к месту <b>{place}</b>. Если вы в другом месте, "
+            "сначала отправьте 📍 геолокацию."
+        ),
+        "report_pending": "🙏 Спасибо! Фото отправлено на проверку. После одобрения его увидят люди поблизости.",
+        "report_saved": "🙏 Спасибо! Сообщение сохранено, люди поблизости смогут его увидеть.",
+        "report_limit": "⏳ Можно отправить не больше {n} сообщений в день. Попробуйте завтра.",
+        "report_approved": "✅ Ваше сообщение о буре одобрено и отправлено людям поблизости. Спасибо!",
+        "report_rejected": "❌ Ваше сообщение о буре не прошло проверку.",
+        "report_nearby": "📸 <b>Сообщение о буре поблизости</b> ({km} км)\n📍 {place} • {time}",
+        "feed_title": "👀 <b>Сообщения о бурях за последние 24 часа</b> (в радиусе {km} км):",
+        "feed_empty": "✅ За последние 24 часа сообщений о бурях поблизости не было.",
+        "feed_item": "📍 {place} • {time} • {km} км",
+        "tips": (
+            "💊 <b>Как беречь здоровье во время пыльной бури</b>\n\n"
+            "😷 <b>Маска:</b> обычная медицинская маска плохо защищает от пыли. "
+            "Используйте <b>N95 / FFP2</b>.\n"
+            "🪟 <b>Дом:</b> закройте окна и двери, щели заложите влажной тканью. "
+            "Если есть очиститель воздуха, включите его.\n"
+            "💧 <b>Вода:</b> пейте больше воды, промывайте нос и глаза чистой водой.\n"
+            "👓 <b>Глаза:</b> носите очки, по возможности не используйте линзы.\n"
+            "🏃 <b>Спорт:</b> откажитесь от пробежек и тренировок на улице.\n"
+            "🚗 <b>Авто:</b> видимость падает. Снизьте скорость, включите "
+            "рециркуляцию воздуха.\n\n"
+            "👶👴 <b>Группа риска:</b> дети, пожилые, беременные, люди с астмой, болезнями "
+            "сердца и лёгких должны оставаться дома.\n"
+            "🚑 При одышке, боли в груди или сильном кашле звоните <b>103</b>."
+        ),
+        "info": (
+            "📚 <b>О пыльных и песчаных бурях</b>\n\n"
+            "🌪 <b>Пыльная буря</b>: сильный ветер поднимает сухую почву и песок и "
+            "переносит их на сотни километров. Видимость может падать ниже 1 км.\n\n"
+            "🏜 <b>Почему их много в Узбекистане?</b>\n"
+            "• Высыхание Аральского моря создало пустыню <b>Аралкум</b>, источник "
+            "соли и пыли.\n"
+            "• Близость пустынь Кызылкум и Каракум.\n"
+            "• Засуха и сокращение зелёных зон.\n\n"
+            "🔬 <b>Показатели:</b>\n"
+            "• <b>PM10</b>: частицы меньше 10 микрон (пыль, песок).\n"
+            "• <b>PM2.5</b>: частицы меньше 2.5 микрон. Глубоко проникают в лёгкие, самые опасные.\n"
+            "• <b>Пыль (dust)</b>: количество минеральной пыли в воздухе.\n\n"
+            "📏 Рекомендация ВОЗ: среднесуточный PM10 не выше <b>45 µg/m³</b>, "
+            "PM2.5 не выше <b>15 µg/m³</b>.\n\n"
+            "🌳 <b>Решение:</b> посадка деревьев и саксауловых лесов на дне Арала "
+            "уменьшают пыльные бури."
+        ),
+    },
+}
+
+# Har bir tugma ikkala tilda: handlerlar ikkalasini ham taniydi
+BUTTONS = {key: {T[lang][key] for lang in LANGS} for key in T["uz"] if key.startswith("btn_")}
+
+
+def t(lang: str, key: str, **kw) -> str:
+    text = T.get(lang, T["uz"]).get(key) or T["uz"][key]
+    return text.format(**kw) if kw else text
+
+
+def level_index(pm10: float) -> int:
+    for i, limit in enumerate(LEVEL_LIMITS):
         if (pm10 or 0) < limit:
-            return emoji, name, advice
-    return LEVELS[-1][1:]
+            return i
+    return len(LEVEL_LIMITS) - 1
+
+
+def level(pm10: float, lang: str = "uz"):
+    i = level_index(pm10)
+    name, advice = LEVELS.get(lang, LEVELS["uz"])[i]
+    return LEVEL_EMOJI[i], name, advice
+
+
+def city_name(key: str, lang: str = "uz") -> str:
+    uz, ru, _, _ = CITIES[key]
+    return ru if lang == "ru" else uz
 
 
 def bar(value: float, maxv: float = 500, width: int = 10) -> str:
     n = min(width, round((value or 0) / maxv * width))
     return "█" * n + "░" * (width - n)
-
-
-WEEKDAYS = ["Dushanba", "Seshanba", "Chorshanba", "Payshanba", "Juma", "Shanba", "Yakshanba"]
-
-START = (
-    "Assalomu alaykum, {name}! 👋\n\n"
-    "Men <b>Chang Monitor</b> botiman 🌪\n"
-    "O'zbekiston shaharlari bo'yicha <b>chang va qum bo'ronlari</b> haqida "
-    "ma'lumot, prognoz va ogohlantirishlar beraman.\n\n"
-    "Boshlash uchun shahringizni tanlang yoki 📍 lokatsiya yuboring 👇"
-)
-
-HELP = (
-    "<b>Buyruqlar:</b>\n"
-    "/havo — hozirgi chang holati\n"
-    "/prognoz — 3 kunlik prognoz\n"
-    "/shahar — shaharni tanlash\n"
-    "/obuna — ogohlantirish va kunlik hisobot sozlamalari\n"
-    "/maslahat — sog'liq bo'yicha maslahatlar\n"
-    "/malumot — chang bo'ronlari haqida\n"
-    "/stop — barcha ma'lumotlarimni o'chirish\n\n"
-    "Ma'lumot manbasi: Open-Meteo / Copernicus CAMS."
-)
-
-TIPS = (
-    "💊 <b>Chang bo'ronida sog'likni saqlash</b>\n\n"
-    "😷 <b>Niqob:</b> oddiy tibbiy niqob changdan yaxshi himoya qilmaydi — "
-    "<b>N95 / FFP2</b> niqob taqing.\n"
-    "🪟 <b>Uy:</b> deraza va eshiklarni yoping, ho'l latta bilan tirqishlarni bekiting. "
-    "Havo tozalagich bo'lsa, yoqing.\n"
-    "💧 <b>Suv:</b> ko'proq suv iching, burun va ko'zni toza suv bilan yuving.\n"
-    "👓 <b>Ko'z:</b> ko'zoynak taqing, linza taqmaslikka harakat qiling.\n"
-    "🏃 <b>Sport:</b> tashqarida yugurish va mashq qilishni to'xtating.\n"
-    "🚗 <b>Mashina:</b> ko'rinish yomonlashadi — tezlikni kamaytiring, "
-    "konditsionerni ichki aylanish rejimiga qo'ying.\n\n"
-    "👶👴 <b>Xavf guruhi:</b> bolalar, keksalar, homiladorlar, astma, yurak va o'pka "
-    "kasalligi borlar uyda qolishi kerak.\n"
-    "🚑 Nafas qisishi, ko'krak og'rig'i yoki kuchli yo'tal bo'lsa — <b>103</b> ga qo'ng'iroq qiling."
-)
-
-INFO = (
-    "📚 <b>Chang va qum bo'ronlari haqida</b>\n\n"
-    "🌪 <b>Chang bo'roni</b> — kuchli shamol quruq tuproq va qumni havoga ko'tarib, "
-    "yuzlab kilometrga olib ketishi. Ko'rinish 1 km dan kam bo'lishi mumkin.\n\n"
-    "🏜 <b>O'zbekistonda nega ko'p?</b>\n"
-    "• Orol dengizi qurishi natijasida <b>Orolqum</b> cho'li paydo bo'ldi — u tuz va "
-    "chang manbai.\n"
-    "• Qizilqum va Qoraqum cho'llari yaqinligi.\n"
-    "• Qurg'oqchilik va yashil maydonlarning kamayishi.\n\n"
-    "🔬 <b>Ko'rsatkichlar:</b>\n"
-    "• <b>PM10</b> — diametri 10 mikrondan kichik zarrachalar (chang, qum).\n"
-    "• <b>PM2.5</b> — 2.5 mikrondan kichik, o'pkaga chuqur kiradi, eng xavflisi.\n"
-    "• <b>Dust</b> — havodagi mineral chang miqdori.\n\n"
-    "📏 JSST (WHO) tavsiyasi: PM10 sutkalik o'rtacha <b>45 µg/m³</b> dan, "
-    "PM2.5 esa <b>15 µg/m³</b> dan oshmasligi kerak.\n\n"
-    "🌳 <b>Yechim:</b> daraxt ekish, Orol tubida saksovul o'rmonlari barpo etish "
-    "chang bo'ronlarini kamaytiradi."
-)

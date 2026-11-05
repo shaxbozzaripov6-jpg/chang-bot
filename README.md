@@ -1,6 +1,11 @@
 # 🌪 Chang Monitor: chang va qum bo'ronlari bo'yicha Telegram bot
 
-Bu bot O'zbekiston shaharlarida chang darajasini (PM10, PM2.5, chang) ko'rsatadi. U 3 kunlik prognoz beradi, obunachilarni chang bo'ronidan oldin ogohlantiradi va har kuni ertalab hisobot yuboradi.
+Bu bot O'zbekiston shaharlarida chang darajasini (PM10, PM2.5, chang) ko'rsatadi. U 3 kunlik prognoz va grafik beradi, obunachilarni chang bo'ronidan oldin ogohlantiradi va har kuni ertalab hisobot yuboradi.
+
+**Imkoniyatlar:**
+- 🌐 **Ikki til**: o'zbekcha va ruscha (/til)
+- 📊 **Grafik**: 72 soatlik chang prognozi rasm ko'rinishida (/grafik)
+- 📸 **Bo'ron xabarlari**: foydalanuvchilar bo'ron rasmini yuboradi, admin tasdiqlaydi va bot rasmni 100 km radiusdagi obunachilarga jo'natadi (/xabar, /xabarlar)
 Ma'lumotlar bepul Open-Meteo / Copernicus CAMS xizmatidan olinadi, buning uchun API kalit kerak emas.
 
 ## Papkada nimalar bor
@@ -10,7 +15,8 @@ Ma'lumotlar bepul Open-Meteo / Copernicus CAMS xizmatidan olinadi, buning uchun 
 | `bot.py` | Asosiy dastur: tugmalar, buyruqlar, avtomatik ogohlantirishlar |
 | `api.py` | Internetdan chang ma'lumotlarini oladi |
 | `db.py` | Foydalanuvchilar va ularning sozlamalarini saqlaydi (SQLite bazasi) |
-| `texts.py` | Barcha matnlar, shaharlar, maslahatlar. **Bot gaplarini o'zgartirish uchun shu faylni tahrirlang** |
+| `texts.py` | Barcha matnlar (o'zbek va rus), shaharlar, maslahatlar. **Bot gaplarini o'zgartirish uchun shu faylni tahrirlang** |
+| `chart.py` | Chang grafigini chizadi |
 | `requirements.txt` | Botga kerakli kutubxonalar ro'yxati |
 | `Procfile` | Hosting xizmatiga botni qanday ishga tushirishni aytadi |
 | `.env.example` | Sozlamalar fayli namunasi |
@@ -30,10 +36,14 @@ Ma'lumotlar bepul Open-Meteo / Copernicus CAMS xizmatidan olinadi, buning uchun 
    ```
    havo - Hozirgi chang holati
    prognoz - 3 kunlik prognoz
+   grafik - Chang grafigi
    shahar - Shaharni tanlash
+   xabar - Bo'ron rasmini yuborish
+   xabarlar - Yaqin atrofdagi bo'ron xabarlari
    obuna - Ogohlantirishlar
    maslahat - Sog'liq maslahatlari
    malumot - Chang bo'ronlari haqida
+   til - Til / Язык
    help - Yordam
    ```
 
@@ -83,8 +93,16 @@ GitHub'da faylni tahrirlang: faylni bosing, ✏️ qalam belgisini bosing, keyin
 - `DAILY_HOUR` soatida (sukut bo'yicha Toshkent vaqti bilan 07:00) kunlik hisobotni yoqqanlarga ertalabki hisobot yuboradi.
 - Chegaralarni `texts.py` faylida (`ALERT_PM10`, `ALERT_DUST`) o'zgartirishingiz mumkin.
 
+## Bo'ron xabarlari qanday ishlaydi
+1. Foydalanuvchi botga rasm yuboradi (izoh bilan yoki izohsiz). Bir kishi 24 soatda ko'pi bilan 5 ta rasm yubora oladi.
+2. **`ADMIN_ID` kiritilgan bo'lsa**: rasm sizga ✅ Tasdiqlash / ❌ Rad etish tugmalari bilan keladi. Tasdiqlasangiz, bot rasmni 100 km radiusdagi ogohlantirish yoqqan obunachilarga yuboradi.
+3. **`ADMIN_ID` kiritilmagan bo'lsa**: rasm darhol saqlanadi, lekin hech kimga avtomatik yuborilmaydi. Uni faqat **👀 Xabarlar** tugmasi orqali ko'rish mumkin. Bu spamdan himoya qiladi.
+4. **👀 Xabarlar** tugmasi so'nggi 24 soatdagi 150 km radiusdagi tasdiqlangan rasmlarni ko'rsatadi.
+
 ## Admin
-`ADMIN_ID` ga o'z Telegram ID raqamingizni yozing (uni @userinfobot orqali bilib olasiz). Shunda `/stat` buyrug'i botda nechta foydalanuvchi borligini ko'rsatadi.
+`ADMIN_ID` ga o'z Telegram ID raqamingizni yozing (uni @userinfobot orqali bilib olasiz). Shunda:
+- bo'ron rasmlarini tasdiqlash huquqi sizda bo'ladi;
+- `/stat` buyrug'i foydalanuvchilar va xabarlar sonini ko'rsatadi.
 
 ## Muammolar bo'lsa
 | Muammo | Yechim |
