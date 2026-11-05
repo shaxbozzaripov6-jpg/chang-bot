@@ -316,15 +316,17 @@ async def cmd_chart(m: Message, bot: Bot):
         return
     lang = u["lang"] or "uz"
     await bot.send_chat_action(m.chat.id, ChatAction.UPLOAD_PHOTO)
-    try:
-        data = await api.get_air(u["lat"], u["lon"])
-        place = place_of(u, lang)
-        png = await asyncio.to_thread(make_chart, data, place, lang)
-    except Exception as e:  # noqa: BLE001
-        log.warning("Grafik xatosi: %s", e)
+    data, weather = await fetch_all(u["lat"], u["lon"])
+    if not data:
         return await m.answer(t(lang, "api_error"))
-    await m.answer_photo(BufferedInputFile(png, "chang.png"),
-                         caption=t(lang, "chart_caption", place=place))
+    place = place_of(u, lang)
+    try:
+        png = await asyncio.to_thread(make_chart, data, place, lang, weather)
+    except Exception:  # noqa: BLE001
+        log.exception("Grafik xatosi")
+        return await m.answer(t(lang, "api_error"))
+    key = "chart_caption" if weather else "chart_caption_nowind"
+    await m.answer_photo(BufferedInputFile(png, "chang.png"), caption=t(lang, key, place=place))
 
 
 @dp.message(Command("shahar"))

@@ -120,10 +120,19 @@ T = {
         "fc_note": "<i>Chang µg/m³ da, kunning eng yuqori ko'rsatkichi. Shamol: o'rtacha tezlik va shiddat.</i>",
         # grafik
         "chart_title": "{place}: chang prognozi (72 soat)",
+        "chart_title_wind": "{place}: chang va shamol prognozi (72 soat)",
         "chart_dust": "Chang",
         "chart_y": "µg/m³",
         "chart_now": "hozir",
-        "chart_caption": "📊 <b>{place}</b>: 3 kunlik chang grafigi\nRangli zonalar: 🟢 yaxshi → 🟣 xavfli",
+        "chart_caption": ("📊 <b>{place}</b>: 3 kunlik chang va shamol grafigi\n"
+                          "Yuqorida chang. Rangli zonalar: 🟢 yaxshi → 🟣 xavfli\n"
+                          "Pastda shamol: tezligi, shiddati va yo'nalishi (strelkalar shamol "
+                          "qayoqqa esayotganini ko'rsatadi)"),
+        "chart_caption_nowind": "📊 <b>{place}</b>: 3 kunlik chang grafigi\nRangli zonalar: 🟢 yaxshi → 🟣 xavfli",
+        "chart_wind": "Shamol tezligi",
+        "chart_gusts": "Shiddati",
+        "chart_wind_y": "m/s",
+        "chart_strong": "kuchli shamol",
         "chart_wait": "📊 Grafik tayyorlanmoqda...",
         # obuna
         "sub_text": (
@@ -258,10 +267,19 @@ T = {
         "fc_line": "PM10 макс: <b>{pm10}</b> (в {peak})  •  Пыль: {dust}  •  PM2.5: {pm25}\n",
         "fc_note": "<i>Пыль в µg/m³, максимум за день. Ветер: средняя скорость и порывы.</i>",
         "chart_title": "{place}: прогноз пыли (72 часа)",
+        "chart_title_wind": "{place}: прогноз пыли и ветра (72 часа)",
         "chart_dust": "Пыль",
         "chart_y": "µg/m³",
         "chart_now": "сейчас",
-        "chart_caption": "📊 <b>{place}</b>: график пыли на 3 дня\nЦветные зоны: 🟢 хорошо → 🟣 опасно",
+        "chart_caption": ("📊 <b>{place}</b>: график пыли и ветра на 3 дня\n"
+                          "Вверху пыль. Цветные зоны: 🟢 хорошо → 🟣 опасно\n"
+                          "Внизу ветер: скорость, порывы и направление (стрелки показывают, "
+                          "куда дует ветер)"),
+        "chart_caption_nowind": "📊 <b>{place}</b>: график пыли на 3 дня\nЦветные зоны: 🟢 хорошо → 🟣 опасно",
+        "chart_wind": "Скорость ветра",
+        "chart_gusts": "Порывы",
+        "chart_wind_y": "м/с",
+        "chart_strong": "сильный ветер",
         "chart_wait": "📊 Готовлю график...",
         "sub_text": (
             "🔔 <b>Настройки подписки</b>\n📍 Место: <b>{place}</b>\n\n"
